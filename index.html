@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Margarita — Consulta</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rosa:#e8637a;--rosa-dark:#c04560;--rosa-light:#fdf0f2;
+  --verde:#2d9e6b;--verde-light:#edf8f3;
+  --amarillo:#f59e0b;--amarillo-light:#fffbeb;
+  --gris-50:#f8f9fa;--gris-100:#f1f3f5;
+  --border:#e9ecef;--text:#212529;--muted:#868e96;
+  --radius:10px;--shadow:0 2px 8px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--gris-50);color:var(--text);font-size:15px;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--rosa);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(232,99,122,.3)}
+.header-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px}
+.header-brand .logo{width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.header-right{font-size:11px;opacity:.8;text-align:right;line-height:1.4}
+
+/* SEARCH */
+.search-section{padding:14px 14px 8px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:9}
+.search-box{position:relative}
+.search-box input{width:100%;border:2px solid var(--border);border-radius:var(--radius);padding:11px 14px 11px 40px;font-size:16px;outline:none;transition:border .15s;background:#fff}
+.search-box input:focus{border-color:var(--rosa)}
+.search-box .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--muted)}
+.search-box input::placeholder{color:var(--muted)}
+.filtros-row{display:flex;gap:8px;margin-top:8px;overflow-x:auto;padding-bottom:2px}
+.filtro-chip{border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;white-space:nowrap;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s}
+.filtro-chip.active{background:var(--rosa);border-color:var(--rosa);color:#fff;font-weight:600}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 14px}
+.stat-mini{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center;box-shadow:var(--shadow)}
+.stat-mini .val{font-size:20px;font-weight:700;color:var(--rosa);font-variant-numeric:tabular-nums}
+.stat-mini .lbl{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* LISTA */
+.lista{padding:0 14px 80px}
+.item-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;border:1px solid var(--border)}
+.item-card.sin-stock{opacity:.6}
+.item-header{padding:12px 14px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.item-nombre{font-weight:600;font-size:15px;line-height:1.3;flex:1}
+.item-precio{font-size:20px;font-weight:700;color:var(--rosa);white-space:nowrap;font-variant-numeric:tabular-nums}
+.item-meta{padding:0 14px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.item-codigo{font-family:'Courier New',monospace;font-size:12px;color:var(--muted);background:var(--gris-50);padding:2px 8px;border-radius:4px}
+.item-familia{font-size:11px;color:var(--muted);background:var(--gris-100);padding:2px 8px;border-radius:12px}
+.stock-badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;margin-left:auto}
+.stock-ok{background:var(--verde-light);color:#166534}
+.stock-bajo{background:var(--amarillo-light);color:#92400e}
+.stock-cero{background:var(--rosa-light);color:var(--rosa-dark)}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+
+/* UPLOAD */
+.upload-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:24px;text-align:center}
+.upload-box{background:#fff;border:2px dashed var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:340px}
+.upload-icon{font-size:48px;margin-bottom:12px}
+.upload-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.upload-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.btn{border:none;border-radius:var(--radius);padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s;width:100%;justify-content:center}
+.btn-primary{background:var(--rosa);color:#fff}.btn-primary:active{background:var(--rosa-dark)}
+.btn-secondary{background:var(--gris-100);color:var(--gris-50);}
+
+/* DETALLE MODAL */
+.detalle-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.detalle-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px;max-height:80vh;overflow-y:auto}
+.detalle-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.detalle-nombre{font-size:18px;font-weight:700;margin-bottom:14px}
+.detalle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.detalle-row:last-child{border-bottom:none}
+.detalle-val{font-weight:600;font-variant-numeric:tabular-nums}
+
+/* FAB */
+.fab{position:fixed;bottom:20px;right:16px;background:var(--rosa);color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(232,99,122,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+
+/* RESULTADO COUNT */
+.result-info{font-size:12px;color:var(--muted);padding:6px 14px;background:var(--gris-50);border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="logo">🌸</div>
+    Margarita Regalería
+  </div>
+  <div class="header-right" id="header-info">Consulta de precios</div>
+</div>
+
+<div id="app"></div>
+
+<script>
+let DB={articulos:[],familias:[]};
+let searchQ='',filterFam='',detalleId=null;
+
+function num(n){return Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function esc(s){return String(s??'').replace(/</g,'&lt;').replace(/&/g,'&amp;')}
+
+function render(){
+  if(!DB.articulos.length){renderUpload();return}
+  renderConsulta();
+}
+
+// ── UPLOAD ──
+function renderUpload(){
+  document.getElementById('app').innerHTML=`
+    <div class="upload-screen">
+      <div class="upload-box">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Cargar datos</div>
+        <div class="upload-sub">Cargá el archivo de backup JSON del sistema para consultar precios y stock</div>
+        <label class="btn btn-primary" style="cursor:pointer">
+          📂 Seleccionar backup JSON
+          <input type="file" accept=".json" style="display:none" onchange="cargarJSON(event)">
+        </label>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted)">El archivo no se sube a ningún servidor.<br>Todo queda en tu celular.</div>
+      </div>
+    </div>`;
+}
+
+function cargarJSON(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      DB.articulos=data.articulos||[];
+      DB.familias=data.familias||[];
+      DB.savedAt=data.savedAt||'';
+      if(DB.savedAt){
+        const fecha=new Date(DB.savedAt).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        document.getElementById('header-info').textContent=`Actualizado: ${fecha}`;
+      }
+      localStorage.setItem('mg_consulta_db',JSON.stringify(DB));
+      render();
+    }catch{alert('Archivo no válido')}
+  };
+  reader.readAsText(file);
+}
+
+// ── CONSULTA ──
+function renderConsulta(){
+  const arts=DB.articulos;
+  const sinStock=arts.filter(a=>a.cantidad<=0).length;
+  const bajo=arts.filter(a=>a.minimo>0&&a.cantidad>0&&a.cantidad<=a.minimo).length;
+
+  const q=searchQ.toLowerCase().trim();
+  let filtered=arts.filter(a=>{
+    const mq=!q||(a.codigo||'').toLowerCase().includes(q)||(a.descripcion||'').toLowerCase().includes(q);
+    const mf=!filterFam||a.familia===filterFam;
+    return mq&&mf;
+  });
+
+  const famChips=DB.familias.map(f=>`
+    <button class="filtro-chip ${filterFam===f.nombre?'active':''}" onclick="setFam('${esc(f.nombre)}')">${esc(f.nombre)}</button>
+  `).join('');
+
+  const cards=filtered.map(a=>{
+    const pv=a.precioVenta||(a.costo&&a.margen?+(a.costo*(1+a.margen/100)).toFixed(2):0);
+    let stockCls='stock-ok',stockTxt=`Stock: ${a.cantidad}`;
+    if(a.cantidad<=0){stockCls='stock-cero';stockTxt='Sin stock'}
+    else if(a.minimo>0&&a.cantidad<=a.minimo){stockCls='stock-bajo';stockTxt=`⚠ ${a.cantidad}`}
+    return `<div class="item-card ${a.cantidad<=0?'sin-stock':''}" onclick="verDetalle('${a.id}')">
+      <div class="item-header">
+        <div class="item-nombre">${esc(a.descripcion)}</div>
+        <div class="item-precio">$${num(pv)}</div>
+      </div>
+      <div class="item-meta">
+        <span class="item-codigo">${esc(a.codigo)}</span>
+        ${a.familia?`<span class="item-familia">${esc(a.familia)}</span>`:''}
+        <span class="stock-badge ${stockCls}">${stockTxt}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('app').innerHTML=`
+    <div class="search-section">
+      <div class="search-box">
+        <span class="ico">⌕</span>
+        <input id="q-input" placeholder="Buscar por código o nombre…" value="${esc(searchQ)}"
+          oninput="searchQ=this.value;renderConsulta()" autocomplete="off" autocorrect="off" autocapitalize="off">
+      </div>
+      <div class="filtros-row">
+        <button class="filtro-chip ${!filterFam?'active':''}" onclick="setFam('')">Todos</button>
+        ${famChips}
+      </div>
+    </div>
+    ${q||filterFam?`<div class="result-info">${filtered.length} resultado${filtered.length!==1?'s':''} de ${arts.length}</div>`:''}
+    <div class="stats-row">
+      <div class="stat-mini"><div class="val">${arts.length}</div><div class="lbl">Artículos</div></div>
+      <div class="stat-mini"><div class="val" style="color:var(--amarillo)">${bajo}</div><div class="lbl">Stock bajo</div></div>
+      <div class="stat-mini"><div class="val" style="color:var(--rosa)">${sinStock}</div><div class="lbl">Sin stock</div></div>
+    </div>
+    <div class="lista">
+      ${filtered.length===0
+        ?`<div class="empty"><div class="empty-icon">🔍</div><p>${arts.length===0?'No hay artículos':'Sin resultados'}</p></div>`
+        :cards}
+    </div>
+    <button class="fab" onclick="recargar()" title="Cargar nuevo backup">📂</button>
+    ${detalleId?renderDetalle():''}`;
+
+  // Mantener foco si estaba buscando
+  if(q){const el=document.getElementById('q-input');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}}
+}
+
+function setFam(f){filterFam=f;renderConsulta()}
+
+function verDetalle(id){detalleId=id;renderConsulta()}
+
+function renderDetalle(){
+  const a=DB.articulos.find(x=>x.id===detalleId);if(!a)return'';
+  const pv=a.precioVenta||(a.costo&&a.margen?+(a.costo*(1+a.margen/100)).toFixed(2):0);
+  let stockCls='stock-ok',stockTxt=`${a.cantidad} unidades`;
+  if(a.cantidad<=0){stockCls='stock-cero';stockTxt='Sin stock'}
+  else if(a.minimo>0&&a.cantidad<=a.minimo){stockCls='stock-bajo';stockTxt=`${a.cantidad} (stock bajo)`}
+  return `<div class="detalle-overlay" onclick="if(event.target===this){detalleId=null;renderConsulta()}">
+    <div class="detalle-box">
+      <div class="detalle-handle"></div>
+      <div class="detalle-nombre">${esc(a.descripcion)}</div>
+      <div class="detalle-row"><span>Código</span><span class="detalle-val" style="font-family:'Courier New',monospace">${esc(a.codigo)}</span></div>
+      <div class="detalle-row"><span>Familia</span><span class="detalle-val">${esc(a.familia||'—')}</span></div>
+      <div class="detalle-row"><span>Precio venta</span><span class="detalle-val" style="font-size:18px;color:var(--rosa)">$${num(pv)}</span></div>
+      <div class="detalle-row"><span>Stock</span><span class="stock-badge ${stockCls}">${stockTxt}</span></div>
+      ${a.proveedor?`<div class="detalle-row"><span>Proveedor</span><span class="detalle-val">${esc(a.proveedor)}</span></div>`:''}
+      ${a.notas?`<div class="detalle-row"><span>Notas</span><span class="detalle-val" style="font-size:13px">${esc(a.notas)}</span></div>`:''}
+      <button class="btn btn-primary" style="margin-top:16px" onclick="detalleId=null;renderConsulta()">Cerrar</button>
+    </div>
+  </div>`;
+}
+
+function recargar(){
+  if(!confirm('¿Cargar un nuevo backup JSON?'))return;
+  DB={articulos:[],familias:[]};
+  searchQ='';filterFam='';
+  render();
+}
+
+// ── INICIO — cargar desde localStorage si hay datos guardados ──
+const cached=localStorage.getItem('mg_consulta_db');
+if(cached){
+  try{
+    DB=JSON.parse(cached);
+    if(DB.savedAt){
+      const fecha=new Date(DB.savedAt).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      setTimeout(()=>{const el=document.getElementById('header-info');if(el)el.textContent=`Actualizado: ${fecha}`},100);
+    }
+  }catch{DB={articulos:[],familias:[]}}
+}
+render();
+</script>
+</body>
+</html>
